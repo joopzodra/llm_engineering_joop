@@ -5,12 +5,27 @@ import random
 with open('artists.json', 'r', encoding='utf-8') as file:
     artists = json.load(file)
 
+def artist_to_string(artist):
+    if not artist:
+        print
+        return "No artist information available."
+    
+    name = artist.get('name', 'Unknown Artist')
+    years = artist.get('years', 'Unknown Years')
+    collection = artist.get('collection', 'Unknown Collection')
+    
+    result = f"{name}, period in which he/she lived: ({years}), in collection: {collection}."
+    print(f"Artist details: {result}")
+    return result
+
 def get_random_artist():
-    return random.choice(artists)
+    choice = random.choice(artists)
+    print(f"Random artist: {choice.get('name', 'Unknown')}")
+    return artist_to_string(choice)
 
 get_random_artist_function = {
     "name": "get_random_artist",
-    "description": "Get a random artist object from the list of available artists with the artist's name, years of activity, and the museum collection the artist's work belong to.",
+    "description": "Get a random artist: his/her name, period in which he/she lived, and the museum collection the artist's work belong to.",
     "parameters": {
         "type": "object",
         "properties": {},
@@ -21,14 +36,16 @@ get_random_artist_function = {
 
 def get_artist_suggestions(query):
     if len(query) < 3:
-        return []
+        return artist_to_string(None)
     
     query_lower = query.lower()
-    return [artist for artist in artists if query_lower in artist.lower()]
+    suggestions = [artist for artist in artists if query_lower in artist.get('name', '').lower()]
+    print(f"Artist suggestions for '{query}': {[artist.get('name', 'Unknown') for artist in suggestions]}")
+    return list(map(artist_to_string, suggestions))
 
 get_artist_suggestions_function = {
     "name": "get_artist_suggestions",
-    "description": "Get a list of artists based on a search query. Returns objects from the list of available artists with artist's names that contain the query string (minimum 3 characters), years of the artist's activity, and the museum collections the artist's work belong to.",
+    "description": "Get a list of artists based on a search query. Returns a list of artist's names that contain the query string (minimum 3 characters), period in which he/she lived, and the museum collections the artist's work belong to.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -44,14 +61,16 @@ get_artist_suggestions_function = {
 
 def get_artist(name):
     for artist in artists:
-        if artist == name:
-            return artist
-    return None
+        if artist.get('name') == name:
+            print(f"Found artist: {artist.get('name', 'Unknown')}")
+            return artist_to_string(artist)
+    print(f"No artist found with name: {name}")
+    return artist_to_string(None)
 
 
 get_artist_function = {
     "name": "get_artist",
-    "description": "Get an artist object by name from the list of available artists with his/her name, years of activity, and the museum collection his/her work belong to.",
+    "description": "Get an artist by name from the list of available artists with his/her name, period in which he/she lived, and the museum collection his/her work belong to.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -107,7 +126,7 @@ def years_overlap(years1_str, years2_str, tolerance):
     return not (end2 < expanded_start1 or start2 > expanded_end1)
 
 def get_contemporary(years):
-    """Get a random artist whose years of activity are roughly contemporary with the given years"""
+    """Get a random artist whose period in which he/she lived are roughly contemporary with the given years"""
     tolerances = [50, 100, 250, 500, 1000]
     
     for tolerance in tolerances:
@@ -116,22 +135,26 @@ def get_contemporary(years):
             artist for artist in artists 
             if years_overlap(years, artist.get('years', ''), tolerance)
         ]
+        print(f"Found {len(matching_artists)} artists within {tolerance} years tolerance for '{years}'")
         
         if matching_artists:
-            return random.choice(matching_artists)
+            chosen_artist = random.choice(matching_artists)
+            print(f"Selected contemporary artist: {chosen_artist.get('name', 'Unknown')}")
+            return artist_to_string(chosen_artist)
     
     # If nothing found even with 1000 years tolerance
-    return None
+    print(f"No contemporary artist found for '{years}'")
+    return artist_to_string(None)
 
 get_contemporary_function = {
     "name": "get_contemporary",
-    "description": "Get a random artist object from the list of available artists whose years of activity are roughly contemporary with the given years. The function will first try to find artists within a 50-year range, then expand to 100 years, 250 years, 500 years, and finally 1000 years if no matches are found.",
+    "description": "Get a random artist object from the list of available artists whose period in which he/she lived are roughly contemporary with the given years. The function will first try to find artists within a 50-year range, then expand to 100 years, 250 years, 500 years, and finally 1000 years if no matches are found.",
     "parameters": {
         "type": "object",
         "properties": {
             "years": {
                 "type": "string",
-                "description": "The years of activity to find contemporary artists for (e.g., '1375–1444' or 'ca. 1730–1785')",
+                "description": "The period in which he/she lived to find contemporary artists for (e.g., '1375–1444' or 'ca. 1730–1785')",
             },
         },
         "required": ["years"],
