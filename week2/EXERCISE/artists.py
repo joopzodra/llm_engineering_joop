@@ -1,6 +1,8 @@
 import json
 import random
 
+from artists_met import get_random_artwork_from_artist, get_random_artwork_from_artist_function
+
 # Load the artists data from JSON file
 with open('artists.json', 'r', encoding='utf-8') as file:
     artists = json.load(file)
@@ -15,7 +17,6 @@ def artist_to_string(artist):
     collection = artist.get('collection', 'Unknown Collection')
     
     result = f"{name}, period in which he/she lived: ({years}), in collection: {collection}."
-    print(f"Artist details: {result}")
     return result
 
 def get_random_artist():
@@ -40,12 +41,11 @@ def get_artist_suggestions(query):
     
     query_lower = query.lower()
     suggestions = [artist for artist in artists if query_lower in artist.get('name', '').lower()]
-    print(f"Artist suggestions for '{query}': {[artist.get('name', 'Unknown') for artist in suggestions]}")
-    return list(map(artist_to_string, suggestions))
+    return ', '.join(list(map(artist_to_string, suggestions)))
 
 get_artist_suggestions_function = {
     "name": "get_artist_suggestions",
-    "description": "Get a list of artists based on a search query. Returns a list of artist's names that contain the query string (minimum 3 characters), period in which he/she lived, and the museum collections the artist's work belong to.",
+    "description": "Get zero, one or more names of artists based on a search query. Returns artist's names that contain the query string (minimum 3 characters), period in which he/she lived, and the museum collections the artist's work belong to.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -127,7 +127,7 @@ def years_overlap(years1_str, years2_str, tolerance):
 
 def get_contemporary(years):
     """Get a random artist whose period in which he/she lived are roughly contemporary with the given years"""
-    tolerances = [50, 100, 250, 500, 1000]
+    tolerances = [10, 25,50, 100, 250, 500, 1000]
     
     for tolerance in tolerances:
         # Find all artists within the current tolerance
@@ -162,10 +162,13 @@ get_contemporary_function = {
     }
 }
 
-tools = [{"type": "function", "function": get_artist_function}, {"type": "function", "function": get_contemporary_function}, {"type": "function", "function": get_random_artist_function}, {"type": "function", "function": get_artist_suggestions_function}]
+tools = [{"type": "function", "function": get_artist_function}, {"type": "function", "function": get_contemporary_function}, {"type": "function", "function": get_random_artist_function}, {"type": "function", "function": get_artist_suggestions_function}, {"type": "function", "function": get_random_artwork_from_artist_function}]
 
 def handle_tool_calls(message):
     responses = []
+    image_url = None
+    artist_name = None
+    title = None
     for tool_call in message.tool_calls:
         if tool_call.function.name == "get_artist":
             arguments = json.loads(tool_call.function.arguments)
@@ -201,4 +204,24 @@ def handle_tool_calls(message):
                 "content": suggestions,
                 "tool_call_id": tool_call.id
             })
-    return responses
+        elif tool_call.function.name == "get_random_artwork_from_artist":
+            arguments = json.loads(tool_call.function.arguments)
+            artist_name = arguments.get('artist_name')
+            artwork_info = get_random_artwork_from_artist(artist_name)
+            if not artwork_info:
+                responses.append({
+                    "role": "tool",
+                    "content": f"No artworks by {artist_name} found.",
+                    "tool_call_id": tool_call.id
+                })
+                # prefer if else here
+            else:
+                image_url = artwork_info.get('image_url')
+                artist_name = artwork_info.get('artist_name')
+                title = artwork_info.get('title')
+                responses.append({
+                    "role": "tool",
+                    "content": f"The artwork will be displayed by the chat interface. Don't include the URL or image in the assistant's message. The artwork has title '{title}'.",
+                    "tool_call_id": tool_call.id
+                })
+    return responses, image_url, artist_name, title
