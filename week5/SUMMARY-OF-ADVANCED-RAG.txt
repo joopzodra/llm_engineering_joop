@@ -1,0 +1,43 @@
+1. Chunking R&D: experiment with chunking strategy.
+
+* try different parameters for chunk size and overlap
+
+2.Encoder R&D: select the best Encoder model based on a test set
+
+* for images: instead of using an image encoder model it seems often te be better to use a llm to interpretate the image and write a caption for it, and then vectorize the caption.
+
+3.Improve Prompts: general content, the current date, relevant context and history
+
+* it's very useful but people tend to forget this.
+
+4.Document pre-processing: use an LLM to make the chunks and/or text for encoding
+
+* before vectorizing, rewrite the document in a form that's more suitable for storing in a vector store, for example: rewrite a table (which can hardly be read by an llm) by asking a llm to rewrite it in a form most suitable for querying by a vector lookup.
+* semantic chunking: divide text into meaningful chunks; pass document to llm and ask it to break it into meaningfull chunks
+
+5.Query rewriting: use an LLM to convert the user’s question to a RAG query
+
+* ask an llm to rewrite the question in a form that's most usable for querying. (NOTE: this can lead to worse outcomes, so: experiment!)
+
+
+6.Query expansion: use an LLM to turn the question into multiple RAG queries
+
+
+7.Re-ranking: use an LLM to sub-select from RAG results
+
+* ask an llm to reorder a given set of chunks so the most relevant chunks for the question are on top (say that it doesn't need to answer the question, only to reorder the chunks), after that you can chop of some the chunks at the tail to keep only the ones on top
+
+
+8.Hierarchical: use an LLM to summarize at multiple levels
+
+* can help to give an llm an idea of the relation between different parts of the knowledge base. For example a summary of salaries of employees help for a question about comparing salaries of employees. (Of coarse it's always hacky: someone can ask a question for which you haven't created a summary.)
+
+9.Graph RAG: retrieve content closely related to similar documents
+
+* by adding metadata to chunks that point to related chunks, there even are database specialized in storing data as nodes and edges, so having the relations between all kind of data parts. But most of the times using metadata is suffficient.
+
+
+10.Agentic RAG: use Agents for retrieval, combining with Memory and Tools such as SQL
+
+* it's about combining all of the previous techniques but let the llm in loops decide which ones to use. It's advanced but leads to less predictable results. Every time the result can be different. (More in the llm agentic course)
+

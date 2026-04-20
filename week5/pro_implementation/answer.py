@@ -10,6 +10,8 @@ from tenacity import retry, wait_exponential
 load_dotenv(override=True)
 
 # MODEL = "openai/gpt-4.1-nano"
+# if you don't have a groq account you can use an openrouter account; otherwise uncomment the line above.
+# But the open source gpt-oss-120b is better than gpt-4.1-nano
 MODEL = "groq/openai/gpt-oss-120b"
 DB_NAME = str(Path(__file__).parent.parent / "preprocessed_db")
 KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent / "knowledge-base"

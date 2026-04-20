@@ -1,0 +1,38 @@
+Toelichting welke RAG pro technieken waar worden toegepast in day5.ipynb
+
+day5 maakt geen gebruik van langchain
+
+zie bijvoorbeeld ook hoe chunks in vector database worden opgeslagen (chroma), in create_embeddings
+
+Three steps:
+Dit is semantic chunking > geschikt voor Darwin
+
+NB. Er wordt ook gestructureerde output gevraagd aan het model, dat gebeurt hier met response_format:
+response = completion(model=MODEL, messages=messages, response_format=Chunks)
+Dit zorgt voor objecten met: titel, beschrijving (deze zitten in de metadata property) en volledige tekst
+
+NB. tqdm zorgt voor een progress bar
+
+NB. chunks worden gemaakt met gpt4.1-nano (duurde 10 minuten om chunks te maken)
+
+And now - let's build an Advanced RAG!
+Hier zie je reranking en query-rewriting
+
+NB!!! query-rewriting kan meer worden toevoegen aan de vraag, b.v. Darwin, en dat leidt ertoe dat er veel algemene documenten over Darwin uit de database worden gehaald: het is verdunning van de gewenste resultaten doordat query-reranking woorden toevoegt die je niet wilt omdat je juist heel specifiek wilt zoeken.
+
+Gebruiken van pro_implementation:
+cd naar pro_implementation
+uv run ingest.py
+(run met 10 processes parallel dankzij workers via pool command)
+
+In de answer.py wordt query expansion toegepast: zowel de originele query als de query-rewriting query worden gebruikt, gemerged (met duplicaten eruit gehouden) en dan reranked. Dit heft de mogelijke nadelige bijwerking (verdunning) van query-rewriting op.
+Je kunt uiteraard meer dan 1 query-rewriting toevoegen: kan nog beter werken.
+
+NB. let op chunk size en kijk wat je het beste vindt
+NB. Mocht je rate limits krijgen, verlaag dan het aantal workers naar bijvoorbeeld 5
+NB. ingest gebruikt gpt4.1-nano
+NB. answer.py gebruikt gpt-oss-120b, maar kleinere modellen kunnen ook goed werken, bijv. gpt4.1=nano
+NB. wait = wait_exponential(multiplier=1, min=10, max=240) is for handling rate limiting (bij openrouter??)
+
+evaluation gebeurt met gradio app:
+uv run app.py
